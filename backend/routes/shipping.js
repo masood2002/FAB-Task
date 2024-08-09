@@ -1,8 +1,8 @@
 import express from "express";
-import { generateShippingLabel } from "../controllers/index.js";
+import { getShippingLabel } from "../controllers/index.js";
 
 const router = express.Router();
 
-router.post("/", generateShippingLabel);
+router.post("/", getShippingLabel);
 
 export default router;

@@ -1,4 +1,3 @@
-// src/ShippingForm.js
 import React, { useState } from "react";
 import axios from "axios";
 import "./ShippingForm.css"; // Import the CSS file
@@ -38,9 +37,11 @@ const ShippingForm = () => {
     <div className="shipping-form">
       <form onSubmit={handleSubmit} className="form">
         <h2>Shipping Details</h2>
+
+        <h3>Sender Information</h3>
         <div className="form-group">
           <label>
-            Sender Name:
+            Name:
             <input
               type="text"
               name="senderName"
@@ -52,7 +53,7 @@ const ShippingForm = () => {
         </div>
         <div className="form-group">
           <label>
-            Sender Address:
+            Address:
             <input
               type="text"
               name="senderAddress"
@@ -62,9 +63,11 @@ const ShippingForm = () => {
             />
           </label>
         </div>
+
+        <h3>Recipient Information</h3>
         <div className="form-group">
           <label>
-            Recipient Name:
+            Name:
             <input
               type="text"
               name="recipientName"
@@ -76,7 +79,7 @@ const ShippingForm = () => {
         </div>
         <div className="form-group">
           <label>
-            Recipient Address:
+            Address:
             <input
               type="text"
               name="recipientAddress"
@@ -86,6 +89,8 @@ const ShippingForm = () => {
             />
           </label>
         </div>
+
+        <h3>Package Information</h3>
         <div className="form-group">
           <label>
             Weight (kg):
@@ -110,12 +115,28 @@ const ShippingForm = () => {
             />
           </label>
         </div>
+
         <button type="submit">Generate Shipping Label</button>
       </form>
-      {labelUrl && (
+      {/* {labelUrl && (
         <div className="label-display">
           <h2>Shipping Label</h2>
           <img src={labelUrl} alt="Shipping Label" />
+        </div>
+      )} */}
+      {labelUrl && (
+        <div className="label-display">
+          <h2>Shipping Label</h2>
+          {/* Option 1: Using <iframe> */}
+          <iframe
+            src={labelUrl}
+            width="100%"
+            height="600px"
+            title="Shipping Label"
+          />
+
+          {/* Option 2: Using <embed> */}
+          {/* <embed src={labelUrl} width="100%" height="600px" type="application/pdf" /> */}
         </div>
       )}
     </div>

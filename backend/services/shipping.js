@@ -1,10 +1,9 @@
-// controllers/shippingController.js
 import axios from "axios";
-import { errorResponse } from "../resources/shipmentResources";
 
 // Function to generate shipping label
-export const gethippingLabel = async (req) => {
+export const shippingLable = async (req) => {
   try {
+    // Extract necessary details from the request body
     const {
       senderName,
       senderAddress,
@@ -14,69 +13,117 @@ export const gethippingLabel = async (req) => {
       dimensions,
     } = req.body;
 
-    // Log dimensions to debug
-    console.log("Dimensions:", dimensions);
+    // Hardcode additional data
+    const address_from = {
+      name: senderName,
+      street1: senderAddress,
+      city: "San Francisco", // Hardcoded city
+      state: "CA", // Hardcoded state
+      zip: "94117", // Hardcoded ZIP code
+      country: "US", // Hardcoded country
+    };
 
-    // Ensure dimensions is defined and properly formatted
-    if (
-      !dimensions ||
-      typeof dimensions !== "string" ||
-      !dimensions.includes("x")
-    ) {
-      throw new Error(errorResponse("Invalid dimensions format"));
-    }
+    const address_to = {
+      name: recipientName,
+      street1: recipientAddress,
+      city: "San Francisco", // Hardcoded city
+      state: "CA", // Hardcoded state
+      zip: "94105", // Hardcoded ZIP code
+      country: "US", // Hardcoded country
+    };
 
-    const [length, width, height] = dimensions.split("x");
+    // Parse dimensions
+    const [length, width, height] = dimensions.split("x").map(Number);
 
-    // Log the split dimensions
-    console.log("Parsed Dimensions:", { length, width, height });
-
-    // GoShippo API request
-    const response = await axios.post(
-      "https://api.goshippo.com/shipments/",
+    // Parcel data with hardcoded values
+    const parcels = [
       {
-        address_from: {
-          name: senderName,
-          street1: senderAddress,
-          city: "City",
-          state: "State",
-          zip: "Zip",
-          country: "Country",
-        },
-        address_to: {
-          name: recipientName,
-          street1: recipientAddress,
-          city: "City",
-          state: "State",
-          zip: "Zip",
-          country: "Country",
-        },
-        parcels: [
-          {
-            length: length.trim(),
-            width: width.trim(),
-            height: height.trim(),
-            weight: weight,
-          },
-        ],
-        async: false,
+        length: length,
+        width: width,
+        height: height,
+        distance_unit: "cm", // Hardcoded distance unit
+        weight: weight,
+        mass_unit: "kg", // Hardcoded mass unit
+      },
+    ];
+
+    // Shippo API endpoint
+    const shippoApiUrl = "https://api.goshippo.com/shipments/";
+    const apiToken = "shippo_test_fcb724022117bd0066fe4a5231bbfba421ce345d"; // Replace with your actual Shippo API token
+
+    // Make the API call to Shippo to generate the shipping label
+    const response = await axios.post(
+      shippoApiUrl,
+      {
+        address_from: address_from,
+        address_to: address_to,
+        parcels: parcels,
+        async: false, // Set to false to get the response synchronously
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.GO_SHIPPO_API_KEY}`,
+          Authorization: `ShippoToken ${apiToken}`,
           "Content-Type": "application/json",
         },
       }
     );
-    // Extract the label URL from the response
-    const labelUrl = response.data.label_url;
 
-    // Send the label URL back to the client
-    return {
-      data: labelUrl,
-    };
+    // Send back the label URL to the frontend
+    // console.log(response.data.rates);
+
+    const firstUSPSRate = response.data.rates.find(
+      (rate) => rate.provider === "USPS"
+    );
+
+    // firstUSPSRate.carrier_account;
+    const response2 = await axios.post(
+      "https://api.goshippo.com/transactions/",
+      {
+        shipment: {
+          address_from: {
+            name: "Mr. Hippo",
+            street1: "215 Clayton St.",
+            city: "San Francisco",
+            state: "CA",
+            zip: "94117",
+            country: "US",
+            phone: "+1 555 341 9393",
+            email: "support@shippo.com",
+          },
+          address_to: {
+            name: "Mrs. Hippo",
+            street1: "965 Mission St.",
+            city: "San Francisco",
+            state: "CA",
+            zip: "94105",
+            country: "US",
+            phone: "+1 555 341 9393",
+            email: "support@shippo.com",
+          },
+          parcels: [
+            {
+              length: "5",
+              width: "5",
+              height: "5",
+              distance_unit: "in",
+              weight: "2",
+              mass_unit: "lb",
+            },
+          ],
+        },
+        carrier_account: firstUSPSRate.carrier_account,
+        servicelevel_token: "usps_priority",
+      },
+      {
+        headers: {
+          Authorization: `ShippoToken ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    // console.log(response2.data.label_url);
+    return { labelUrl: response2.data.label_url };
   } catch (error) {
-    console.log(error.message);
-    throw new Error(errorResponse("Error in Getting shipping label"));
+    throw new Error("Error Getting Label");
   }
 };
